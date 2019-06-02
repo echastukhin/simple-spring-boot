@@ -2,15 +2,30 @@
 
 
 function main() {
+
    check_minikube_status
-   build_application
-   build_docker_image
-   run_k8s_deploymint
-   run_k8s_service
-   print_result_note
-   echo "OK"
+   local action=$(get_action "$@")
+   local new_version=$(get_new_version "$@")
+
+   if [[ "$action" == "update" ]]; then
+       deployment_update $new_version
+   elif [[ "$action" == "initial" ]]; then
+       initial_deploy
+   else
+       echo "Wrong action type"
+   fi
+
+   echo "Done..."
 }
 
+function initial_deploy() {
+
+   build_application_and_docker_image
+   prepare_k8s_manifest
+   apply_k8s_manifest
+   print_result_note
+
+}
 function check_minikube_status() {
     local catched_lines_count=$(minikube status | grep "Running\|Correctly Configured" | wc -l)
     if [[ $catched_lines_count -lt 4 ]]; then
@@ -19,21 +34,33 @@ function check_minikube_status() {
     fi
 }
 
-function build_application() {
-   mvn clean install
-}
-
-function build_docker_image() {
+function build_application_and_docker_image() {
    eval $(minikube docker-env)
-   docker build -t ping-pong:0.0.1 target/ -f src/main/docker/Dockerfile
+   mvn clean package
 }
 
-function run_k8s_deploymint() {
-    kubectl create -f k8s/deployment
+function prepare_k8s_manifest() {
+    local auto_generated_manifest="target/classes/META-INF/fabric8/kubernetes.yml"
+    local manifest="target/kubernetes.yml"
+    if [[ -f $auto_generated_manifest ]]; then
+        head -n $(($(grep -n "^\s\+- env:" $auto_generated_manifest | cut -d":" -f1) - 1)) $auto_generated_manifest > $manifest
+    else
+        echo "Can not construct k8s manifest file"
+        return 1
+    fi
+}
+function apply_k8s_manifest() {
+    kubectl create -f target/kubernetes.yml || exit
 }
 
-function run_k8s_service() {
-    kubectl create -f k8s/service
+function deployment_update() {
+    local new_version=$1
+    if [[ -n $new_version ]]; then
+        kubectl --record deployment.apps/ping-pong set image deployment.v1.apps/ping-pong ping-pong=ping-pong:$new_version
+    else
+        echo "Wrong version argument"
+    fi
+
 }
 
 function print_result_note() {
@@ -41,4 +68,20 @@ function print_result_note() {
     echo -e "application avaliable on following address:\nhttp://${cluster_ip}:30001 "
 }
 
-main
+function get_action() {
+    if [[ ${#@} -ge 1 ]]; then
+        echo "$1"
+    else
+        echo
+    fi
+}
+
+function get_new_version() {
+    if [[ ${#@} -ge 2 ]]; then
+        echo "$2"
+    else
+        echo
+    fi
+}
+
+main "$@"

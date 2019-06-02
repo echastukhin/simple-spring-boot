@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${project.artifactId}
+  labels:
+      app: ${project.artifactId}
+spec:
+  selector:
+      matchLabels:
+        app: ${project.artifactId}
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: ${project.artifactId}
+    spec:
+      containers:
+        - name: ${project.artifactId}
+          image: ${project.artifactId}:${project.version}
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8085
+          readinessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /
+              port: 8085
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+                path: /
+                port: 8085
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 20

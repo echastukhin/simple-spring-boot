@@ -1,14 +1,14 @@
-package ru.example.simple;
+package ru.example.ping_pong;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SimpleApplication {
+public class PingPongApplication {
 
 	public static void main(String[] args) {
 
-		SpringApplication.run(SimpleApplication.class, args);
+		SpringApplication.run(PingPongApplication.class, args);
 	}
 
 }

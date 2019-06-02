@@ -10,8 +10,8 @@
 	</parent>
 	<groupId>ru.example</groupId>
 	<artifactId>ping-pong</artifactId>
-	<version>0.0.1</version>
-	<name>ping-pong</name>
+	<version>0.1.10</version>
+	<name>${project.artifactId}</name>
 	<description>Simple project for Spring Boot</description>
 
 	<properties>
@@ -35,29 +35,72 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+			<!--			<plugin>
+                            <groupId>io.fabric8</groupId>
+                            <artifactId>docker-maven-plugin</artifactId>
+                            <version>0.30.0</version>
+                            <configuration>
+                                <images>
+                                    <image>
+                                        <name>${project.artifactId}</name>
+                                        <build>
+                                            <tags>
+                                                <tag>${project.version}</tag>
+                                            </tags>
+                                            <dockerFile>${project.basedir}/Dockerfile</dockerFile>
+                                            <contextDir>${project.basedir}</contextDir>
+                                        </build>
+                                    </image>
+                                </images>
+                            </configuration>
+                            <executions>
+                                <execution>
+                                    <id>remove-image</id>
+                                    <phase>package</phase>
+                                    <goals>
+                                        <goal>remove</goal>
+                                    </goals>
+                                    <configuration>
+                                        <skipTag>true</skipTag>
+                                    </configuration>
+                                </execution>
+                                <execution>
+                                    <id>build-image</id>
+                                    <phase>package</phase>
+                                    <goals>
+                                        <goal>build</goal>
+                                    </goals>
+                                </execution>
+                            </executions>
+                        </plugin> -->
 			<plugin>
 				<groupId>io.fabric8</groupId>
-				<artifactId>docker-maven-plugin</artifactId>
-				<version>0.30.0</version>
+				<artifactId>fabric8-maven-plugin</artifactId>
+				<version>4.1.0</version>
 				<configuration>
 					<images>
 						<image>
-							<name>ping-pong</name>
+							<name>${project.artifactId}:${project.version}</name>
 							<build>
-								<tags>
-									<tag>0.0.1</tag>
-								</tags>
-								<dockerFile>${project.basedir}/src/main/docker/Dockerfile</dockerFile>
-								<contextDir>${project.basedir}/target</contextDir>
+								<dockerFile>${project.basedir}/Dockerfile</dockerFile>
 							</build>
 						</image>
 					</images>
 				</configuration>
-			</plugin><plugin>
-				<groupId>io.fabric8</groupId>
-				<artifactId>fabric8-maven-plugin</artifactId>
-				<version>4.1.0</version>
-			</plugin></plugins>
+				<executions>
+					<execution>
+						<id>build-image</id>
+						<phase>package</phase>
+						<goals>
+							<goal>build</goal>
+							<goal>resource</goal>
+							<!--	<goal>resource-apply</goal> -->
+						</goals>
+					</execution>
+				</executions>
+
+			</plugin>
+		</plugins>
 	</build>
 
 </project>

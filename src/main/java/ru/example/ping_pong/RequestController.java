@@ -1,10 +1,8 @@
-package ru.example.simple;
+package ru.example.ping_pong;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.Map;
 
 @RestController
 public class RequestController {
@@ -17,9 +15,12 @@ public class RequestController {
     @Value("${spring.application.name}")
     private String name;
 
+    @Value("${spring.application.version}")
+    private String version;
+
     @RequestMapping
     public String sayVersion(){
-        return name + " version 0.0.1";
+        return name + " " + version;
     }
 
 }
