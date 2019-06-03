@@ -11,6 +11,8 @@ function main() {
        deployment_update $new_version
    elif [[ "$action" == "initial" ]]; then
        initial_deploy
+   elif [[ "$action" == "build" ]]; then
+       build_docker_image $new_version
    else
        echo "Wrong action type"
    fi
@@ -30,7 +32,7 @@ function check_minikube_status() {
     local catched_lines_count=$(minikube status | grep "Running\|Correctly Configured" | wc -l)
     if [[ $catched_lines_count -lt 4 ]]; then
         echo "It seems minikube is not running, please run it first"
-	exit 1;
+	    exit 1
     fi
 }
 
@@ -46,7 +48,7 @@ function prepare_k8s_manifest() {
         head -n $(($(grep -n "^\s\+- env:" $auto_generated_manifest | cut -d":" -f1) - 1)) $auto_generated_manifest > $manifest
     else
         echo "Can not construct k8s manifest file"
-        return 1
+        exit 1
     fi
 }
 function apply_k8s_manifest() {
@@ -54,18 +56,35 @@ function apply_k8s_manifest() {
 }
 
 function deployment_update() {
-    local new_version=$1
+    local new_version=$(validate_version $1)
     if [[ -n $new_version ]]; then
         kubectl --record deployment.apps/ping-pong set image deployment.v1.apps/ping-pong ping-pong=ping-pong:$new_version
     else
         echo "Wrong version argument"
+        exit 1
     fi
 
 }
 
+function build_docker_image() {
+    local new_version=$(validate_version $1)
+    if [[ -n $new_version ]]; then
+        change_project_version $new_version
+        build_application_and_docker_image
+    else
+        echo "Wrong version argument"
+        exit 1
+    fi
+}
+
+function change_project_version() {
+   local new_version=$1
+   sed -i "s/^<version>.*<\/version>/<version>$new_version<\/version>/" pom.xml 
+}
+
 function print_result_note() {
     local cluster_ip=$(minikube ip)
-    echo -e "application avaliable on following address:\nhttp://${cluster_ip}:30001 "
+    echo -e "\napplication available on following address:\nhttp://${cluster_ip}:30001 "
 }
 
 function get_action() {
@@ -82,6 +101,10 @@ function get_new_version() {
     else
         echo
     fi
+}
+
+function validate_version() {
+   echo $1 | grep "[0-9]\+\.[0-9]\+\.[0-9]\+"
 }
 
 main "$@"
