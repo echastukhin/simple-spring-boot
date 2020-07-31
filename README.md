@@ -1,4 +1,4 @@
-# simple-spring-boot application 'ping-pong'
+# simple-spring-boot application 'ping-pong' in kubernetes
 
 To build docker image use following command:
 
